@@ -1,0 +1,14 @@
+/* src/index.css */
+/* Order ফর্মের মেটা ফিল্ডগুলোর (Date/Order No, Name/Phone, Courier/Branch)
+   রেসপন্সিভ গ্রিড — ডেস্কটপে ২ কলাম পাশাপাশি, মোবাইলে ১ কলাম একটার নিচে একটা। */
+.meta-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 560px) {
+  .meta-grid-2col {
+    grid-template-columns: 1fr;
+  }
+}
