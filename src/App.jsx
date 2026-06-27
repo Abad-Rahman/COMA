@@ -58,7 +58,7 @@ export default function App() {
     const saved = await saveOrder(order);
     await reloadAll();
     triggerSync();
-    if (modal?.fromCustomer) {
+    if (modal?.returnToCustomerProfile) {
       const cust = customers.find((c) => c.id === saved.customerId);
       if (cust) setModal({ type: "customer-profile", data: cust });
       else setModal(null);
@@ -106,13 +106,13 @@ export default function App() {
     triggerSync();
   }
 
-  async function openNewOrderForCustomer(customer) {
+  async function openNewOrderForCustomer(customer, returnToCustomerProfile = false) {
     const numbering = await getAllOrdersForNumbering();
-    setModal({ type: "order-form", data: newEmptyOrder(numbering, customer), fromCustomer: customer.id });
+    setModal({ type: "order-form", data: newEmptyOrder(numbering, customer), fromCustomer: customer.id, returnToCustomerProfile });
   }
 
   async function openViewOrder(order, fromCustProfile = false) {
-    setModal({ type: "order-form", data: { ...order, _isExisting: true }, fromCustomer: fromCustProfile ? order.customerId : null });
+    setModal({ type: "order-form", data: { ...order, _isExisting: true }, fromCustomer: fromCustProfile ? order.customerId : null, returnToCustomerProfile: fromCustProfile });
   }
 
   function renderModal() {
@@ -120,7 +120,7 @@ export default function App() {
     const close = () => {
       // confirmDialog খোলা থাকলে modal বন্ধ করা যাবে না
       if (confirmDialog) return;
-      if (modal.fromCustomer && modal.type === "order-form") {
+      if (modal.returnToCustomerProfile && modal.type === "order-form") {
         const cust = customers.find((c) => c.id === modal.fromCustomer);
         if (cust) {
           setModal({ type: "customer-profile", data: cust });
@@ -148,7 +148,7 @@ export default function App() {
             <CustomerProfile
               customer={modal.data}
               orders={orders}
-              onNewOrder={() => openNewOrderForCustomer(modal.data)}
+              onNewOrder={() => openNewOrderForCustomer(modal.data, true)}
               onEditCustomer={() => setModal({ type: "customer-form", data: modal.data })}
               onViewOrder={openViewOrder}
               onDeleteOrder={handleDeleteOrder}
