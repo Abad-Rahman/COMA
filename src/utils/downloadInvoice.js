@@ -302,17 +302,18 @@ export function printPendingReport(orders) {
     totalAmount += amount;
     const date = formatDate(o.date);
     const collected = o.productCollected ? "Yes" : "No";
+    const paid = o.paymentReceived ? "Yes" : "No";
 
     return `
       <tr style="background:${i % 2 === 0 ? "#ffffff" : "#f9fdf9"}">
         <td style="padding:6px;border-bottom:1px solid #eee;font-size:12px;">${i + 1}</td>
         <td style="padding:6px;border-bottom:1px solid #eee;font-size:12px;">${date}</td>
         <td style="padding:6px;border-bottom:1px solid #eee;font-size:12px;">${escapeHtml(o.customerName)}</td>
-        <td style="padding:6px;border-bottom:1px solid #eee;font-size:12px;">${escapeHtml(o.customerAddress || "")}</td>
+        <td style="padding:6px;border-bottom:1px solid #eee;font-size:12px;">${escapeHtml(o.customerArea || "")}</td>
         <td style="padding:6px;border-bottom:1px solid #eee;font-size:12px;text-align:right;">৳${amount.toFixed(0)}</td>
         <td style="padding:6px;border-bottom:1px solid #eee;font-size:12px;text-align:center;">Yes</td>
         <td style="padding:6px;border-bottom:1px solid #eee;font-size:12px;text-align:center;">${collected}</td>
-        <td style="padding:6px;border-bottom:1px solid #eee;font-size:12px;text-align:center;">No</td>
+        <td style="padding:6px;border-bottom:1px solid #eee;font-size:12px;text-align:center;">${paid}</td>
       </tr>`;
   }).join("");
 
@@ -326,18 +327,20 @@ export function printPendingReport(orders) {
   * { box-sizing: border-box; }
   body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #222; background: #fff; }
   .report-container { max-width: 1000px; margin: 0 auto; }
-  .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #1b5e20; padding-bottom: 15px; margin-bottom: 20px; }
+  .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #1b5e20; padding: 20px 0 15px 0; margin-bottom: 20px; }
   .header-left { display: flex; align-items: center; gap: 15px; }
   .header img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid #1b5e20; }
   .title { color: #1b5e20; font-size: 24px; font-weight: 800; }
   .sub { color: #555; font-size: 14px; margin-top: 4px; }
   .report-date { font-size: 13px; color: #555; text-align: right; }
   table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-  thead tr { background: #1b5e20; color: #fff; }
-  thead th { padding: 10px 6px; text-align: left; font-size: 12px; font-weight: 700; border: 1px solid #1b5e20; }
+  thead tr { background: #e8f5e9; }
+  thead th { padding: 8px 5px; text-align: left; font-size: 11px; font-weight: 700; border: 1px solid #c8e6c9; color: #1b5e20; }
   thead th.c { text-align: center; }
   thead th.r { text-align: right; }
-  td { border-left: 1px solid #eee; border-right: 1px solid #eee; }
+  tbody td { border: 1px solid #f1f8e9; padding: 5px 4px; font-size: 11px; }
+  tbody tr:nth-child(odd) { background: #ffffff; }
+  tbody tr:nth-child(even) { background: #f9fdf9; }
   .summary { display: flex; justify-content: flex-end; align-items: center; background: #e8f5e9; padding: 12px 20px; border-radius: 6px; border: 1px solid #c8e6c9; }
   .summary .label { color: #1b5e20; font-weight: 700; font-size: 15px; margin-right: 15px; }
   .summary .value { color: #1b5e20; font-weight: 800; font-size: 20px; }
@@ -370,11 +373,11 @@ export function printPendingReport(orders) {
       <thead>
         <tr>
           <th>SL</th>
-          <th>Order Date</th>
-          <th>Customer Name</th>
-          <th>Branch/Area</th>
+          <th>Date</th>
+          <th>Customer</th>
+          <th>Area</th>
           <th class="r">Amount</th>
-          <th class="c">Courier Sent</th>
+          <th class="c">Sent</th>
           <th class="c">Collected</th>
           <th class="c">Paid</th>
         </tr>
@@ -427,12 +430,13 @@ export function printPendingReport(orders) {
 export function downloadPendingReportImage(orders) {
   const pending = orders && orders.length > 0 ? orders : [];
   const canvas = document.createElement("canvas");
-  const W = 1200;
+  const W = 1100;
   const rowH = 32;
-  const headerH = 180;
+  const headerH = 130;
   const tableHeaderH = 40;
+  const spacerH = 8;
   const footerH = 120;
-  const H = headerH + tableHeaderH + Math.max(pending.length, 1) * rowH + 40 + footerH;
+  const H = headerH + spacerH + tableHeaderH + Math.max(pending.length, 1) * rowH + 40 + footerH;
   
   canvas.width = W;
   canvas.height = H;
@@ -451,49 +455,64 @@ export function downloadPendingReportImage(orders) {
   img.onload = () => {
     ctx.save();
     ctx.beginPath();
-    ctx.arc(60, 50, 38, 0, Math.PI * 2);
+    ctx.arc(60, 65, 30, 0, Math.PI * 2);
     ctx.clip();
-    ctx.drawImage(img, 22, 12, 76, 76);
+    ctx.drawImage(img, 30, 35, 60, 60);
     ctx.restore();
     
     ctx.fillStyle = "#fff";
-    ctx.font = "bold 28px Arial";
-    ctx.fillText("Chitra Laboratories (Unani)", 130, 48);
-    ctx.font = "14px Arial";
-    ctx.fillStyle = "#a5d6a7";
-    ctx.fillText("Pending Orders Report", 130, 68);
-    ctx.fillStyle = "#c8e6c9";
+    ctx.font = "bold 24px Arial";
+    ctx.fillText("Chitra Laboratories (Unani)", 110, 58);
     ctx.font = "12px Arial";
+    ctx.fillStyle = "#a5d6a7";
+    ctx.fillText("Pending Orders Report", 110, 75);
+    ctx.fillStyle = "#c8e6c9";
+    ctx.font = "11px Arial";
     const genDate = new Date().toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
-    ctx.fillText("Generated: " + genDate, 130, 90);
+    ctx.fillText("Generated: " + genDate, 110, 90);
     
-    ctx.fillStyle = "#e8f5e9";
-    ctx.fillRect(0, headerH - 5, W, 5);
+    // White space divider before table
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, headerH, W, spacerH);
     
-    // Table header
-    const th = headerH + 20;
+    // Table header background - deep green with border
     ctx.fillStyle = "#1b5e20";
-    ctx.font = "bold 13px Arial";
-    const cols = [40, 120, 280, 480, 620, 700, 800, 920];
+    ctx.fillRect(20, headerH + spacerH, W - 40, tableHeaderH);
+    ctx.strokeStyle = "#0d3817";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(20, headerH + spacerH, W - 40, tableHeaderH);
+    
+    // Table header text - vertically centered
+    const th = headerH + spacerH + 20;
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 12px Arial";
+    ctx.textAlign = "left";
+    const cols = [40, 120, 280, 480, 600, 680, 780, 900, 1000];
     ["SL", "Date", "Customer", "Area", "Amount", "Courier", "Collected", "Paid"].forEach((h, i) => {
       if (i >= 4) {
         ctx.textAlign = "right";
-        ctx.fillText(h, cols[i + 1], th + 18);
-        ctx.textAlign = "left";
+        ctx.fillText(h, cols[i + 1] - 5, th + 2);
       } else {
-        ctx.fillText(h, cols[i], th + 18);
+        ctx.textAlign = "left";
+        ctx.fillText(h, cols[i] + 5, th + 2);
       }
     });
+    ctx.textAlign = "left";
     
     // Table rows
     let totalAmount = 0;
     pending.forEach((o, i) => {
-      const ry = headerH + tableHeaderH + i * rowH;
+      const ry = headerH + spacerH + tableHeaderH + i * rowH;
       const amount = calcTotal(o.products);
       totalAmount += amount;
       
       ctx.fillStyle = i % 2 === 0 ? "#fff" : "#f9fdf9";
       ctx.fillRect(20, ry, W - 40, rowH);
+      
+      // Row border
+      ctx.strokeStyle = "#c8e6c9";
+      ctx.lineWidth = 0.8;
+      ctx.strokeRect(20, ry, W - 40, rowH);
       
       ctx.fillStyle = "#888";
       ctx.font = "12px Arial";
@@ -503,7 +522,7 @@ export function downloadPendingReportImage(orders) {
       ctx.font = "12px Arial";
       ctx.fillText(formatDate(o.date), cols[1], ry + 20);
       ctx.fillText(o.customerName.substring(0, 20), cols[2], ry + 20);
-      ctx.fillText((o.customerAddress || "").substring(0, 15), cols[3], ry + 20);
+      ctx.fillText((o.customerArea || "").substring(0, 15), cols[3], ry + 20);
       
       ctx.textAlign = "right";
       ctx.fillStyle = "#1b5e20";
@@ -514,7 +533,7 @@ export function downloadPendingReportImage(orders) {
       ctx.font = "12px Arial";
       ctx.fillText("Yes", cols[6], ry + 20);
       ctx.fillText(o.productCollected ? "Yes" : "No", cols[7], ry + 20);
-      ctx.fillText("—", cols[8] || W - 60, ry + 20);
+      ctx.fillText(o.paymentReceived ? "Yes" : "No", cols[8] || W - 60, ry + 20);
       
       ctx.textAlign = "left";
     });
@@ -524,12 +543,12 @@ export function downloadPendingReportImage(orders) {
       ctx.fillStyle = "#aaa";
       ctx.font = "14px Arial";
       ctx.textAlign = "center";
-      ctx.fillText("No pending orders found", W / 2, headerH + tableHeaderH + 50);
+      ctx.fillText("No pending orders found", W / 2, headerH + spacerH + tableHeaderH + 50);
       ctx.textAlign = "left";
     }
     
     // Total section
-    const totalY = headerH + tableHeaderH + Math.max(pending.length, 1) * rowH + 20;
+    const totalY = headerH + spacerH + tableHeaderH + Math.max(pending.length, 1) * rowH + 20;
     ctx.fillStyle = "#e8f5e9";
     ctx.fillRect(20, totalY, W - 40, 40);
     ctx.fillStyle = "#1b5e20";

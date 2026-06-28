@@ -44,6 +44,7 @@ export function newEmptyOrder(existingOrders, customer) {
     customerName: customer.name || "",
     customerPhone: customer.phone || "",
     customerAddress: customer.branch || "",
+    customerArea: customer.area || "",
     courier: customer.courier || "",
     customerId: customer.id,
     products: [emptyProduct()],

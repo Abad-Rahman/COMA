@@ -192,7 +192,7 @@ export function SettingsPanel({ orders, products, couriers, onSave, onClose }) {
                   <tr key={o.id} style={{ borderBottom: "1px solid #f1f8e9" }}>
                     <td style={{ padding: "6px 8px" }}>{formatDate(o.date)}</td>
                     <td style={{ padding: "6px 8px" }}>{o.customerName}</td>
-                    <td style={{ padding: "6px 8px" }}>{o.customerAddress || "—"}</td>
+                    <td style={{ padding: "6px 8px" }}>{o.customerArea || "—"}</td>
                     <td style={{ padding: "6px 8px", textAlign: "center" }}>
                       <button style={s.removeBtn} onClick={() => setPendingOrders(pendingOrders.filter((po) => po.id !== o.id))} title="Remove from report">✕</button>
                     </td>
