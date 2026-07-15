@@ -3,8 +3,10 @@ import { s } from "../styles";
 import { OrderCard } from "./OrderCard";
 import { calcTotal } from "../utils/helpers";
 
+import { compareOrders } from "../utils/helpers";
+
 export function CustomerProfile({ customer, orders, onNewOrder, onEditCustomer, onViewOrder, onDeleteOrder }) {
-  const myOrders = orders.filter((o) => o.customerId === customer.id).sort((a, b) => b.date.localeCompare(a.date));
+  const myOrders = orders.filter((o) => o.customerId === customer.id).sort(compareOrders);
   const now = new Date();
   const thisMonth = myOrders.filter((o) => {
     const d = new Date(o.date);

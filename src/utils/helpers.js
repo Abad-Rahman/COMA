@@ -43,6 +43,17 @@ export function calcTotal(products) {
   return products.reduce((s, p) => s + (parseFloat(p.qty) || 0) * (parseFloat(p.price) || 0), 0);
 }
 
+export function compareOrders(a, b) {
+  const dateDiff = (b.date || "").localeCompare(a.date || "");
+  if (dateDiff !== 0) return dateDiff;
+
+  const aNo = String(a.orderNo || "");
+  const bNo = String(b.orderNo || "");
+  if (aNo === bNo) return 0;
+
+  return bNo.localeCompare(aNo, undefined, { numeric: true, sensitivity: "base" });
+}
+
 export function formatDate(iso) {
   if (!iso) return "";
   const [y, m, d] = iso.split("-");

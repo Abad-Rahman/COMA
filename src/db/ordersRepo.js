@@ -5,12 +5,13 @@
 // বদলানো যাবে।
 // ----------------------------------------------------------------
 import { db, withSyncMeta } from "./database";
+import { compareOrders } from "../utils/helpers";
 
 export async function getAllOrders() {
   // _deleted মার্ক করা অর্ডার বাদ দিয়ে বাকি সব আনবো (soft-delete pattern,
   // যাতে sync এর সময় ডিলিট হওয়া রেকর্ডও Supabase এ reflect করানো যায়)
   const all = await db.orders.toArray();
-  return all.filter((o) => !o._deleted).sort((a, b) => b.date.localeCompare(a.date));
+  return all.filter((o) => !o._deleted).sort(compareOrders);
 }
 
 export async function getOrderById(id) {
@@ -19,7 +20,7 @@ export async function getOrderById(id) {
 
 export async function getOrdersByCustomer(customerId) {
   const all = await db.orders.where("customerId").equals(customerId).toArray();
-  return all.filter((o) => !o._deleted).sort((a, b) => b.date.localeCompare(a.date));
+  return all.filter((o) => !o._deleted).sort(compareOrders);
 }
 
 export async function saveOrder(order) {

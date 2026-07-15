@@ -8,7 +8,7 @@ import { ReportPanel } from "./components/ReportPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { CustomerForm } from "./components/CustomerForm";
 import { CustomerProfile } from "./components/CustomerProfile";
-import { newEmptyOrder } from "./utils/helpers";
+import { compareOrders, newEmptyOrder } from "./utils/helpers";
 
 import { getAllOrders, saveOrder, deleteOrder, getAllOrdersForNumbering } from "./db/ordersRepo";
 import { getAllCustomers, saveCustomer, deleteCustomer } from "./db/customersRepo";
@@ -227,7 +227,7 @@ export default function App() {
             ) : (
               <div style={s.cardGrid}>
                 {[...orders]
-                  .sort((a, b) => b.date.localeCompare(a.date))
+                  .sort(compareOrders)
                   .slice(0, 6)
                   .map((o) => (
                     <OrderCard key={o.id} order={o} onView={openViewOrder} onDelete={handleDeleteOrder} onToggleStatus={handleToggleOrderStatus} />
@@ -250,7 +250,7 @@ export default function App() {
             ) : (
               <div style={s.cardGrid}>
                 {[...orders]
-                  .sort((a, b) => b.date.localeCompare(a.date))
+                  .sort(compareOrders)
                   .map((o) => (
                     <OrderCard key={o.id} order={o} onView={openViewOrder} onDelete={handleDeleteOrder} onToggleStatus={handleToggleOrderStatus} />
                   ))}
