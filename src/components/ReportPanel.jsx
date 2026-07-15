@@ -24,6 +24,8 @@ export function ReportPanel({ orders }) {
   }
   const filtered = filterOrders(period);
   const totalRevenue = filtered.reduce((s, o) => s + calcTotal(o.products), 0);
+  const avgOrder = filtered.length ? Math.round(totalRevenue / filtered.length) : 0;
+  const roundedRevenue = Math.round(totalRevenue);
   const productMap = {};
   filtered.forEach((o) =>
     o.products.forEach((p) => {
@@ -35,7 +37,7 @@ export function ReportPanel({ orders }) {
       productMap[p.name].rev += rev;
     })
   );
-  const bestProducts = Object.entries(productMap).sort((a, b) => b[1].qty - a[1].qty).slice(0, 5);
+  const bestProducts = Object.entries(productMap).sort((a, b) => b[1].qty - a[1].qty).slice(0, 6);
   const tabs = [
     { k: "week", l: "This Week" },
     { k: "month", l: "This Month" },
@@ -59,21 +61,21 @@ export function ReportPanel({ orders }) {
           <div style={r.kpiVal}>{filtered.length}</div>
           <div style={r.kpiLabel}>Total Orders</div>
         </div>
-        <div style={r.kpi}>
-          <div style={r.kpiVal}>৳{totalRevenue.toLocaleString()}</div>
-          <div style={r.kpiLabel}>Total Revenue</div>
-        </div>
-        <div style={{ ...r.kpi, gridRow: "span 2", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          <div style={{ ...r.kpiVal, fontSize: 20 }}>{filtered.length ? Math.round(totalRevenue / filtered.length).toLocaleString() : 0}</div>
+        <div style={{ ...r.kpi, gridColumn: 2, gridRow: 1 }}>
+          <div style={r.kpiVal}>{avgOrder.toLocaleString()}</div>
           <div style={r.kpiLabel}>Avg Order (৳)</div>
+        </div>
+        <div style={{ ...r.kpi, gridColumn: 3, gridRow: "1 / span 2", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <div style={{ ...r.kpiVal, fontSize: 20 }}>৳{roundedRevenue.toLocaleString()}</div>
+          <div style={r.kpiLabel}>Total Revenue</div>
         </div>
         <div style={r.kpi}>
           <div style={r.kpiVal}>{pendingCourier}</div>
-          <div style={r.kpiLabel}>কুরিয়ারে জমা</div>
+          <div style={r.kpiLabel}>Courier Pending</div>
         </div>
         <div style={r.kpi}>
           <div style={r.kpiVal}>{pendingPayment}</div>
-          <div style={r.kpiLabel}>পেমেন্ট বাকি</div>
+          <div style={r.kpiLabel}>Payment Pending</div>
         </div>
       </div>
       {bestProducts.length > 0 && (

@@ -138,9 +138,13 @@ export function OrderForm({ initial, onSave, onCancel, existingOrders, products,
               </select>
             </div>
             <div style={s.fieldGroup}>
-              <label style={s.label}>Branch</label>
-              <input style={{ ...s.input, background: "#f0f7f0" }} value={order.customerAddress || ""} readOnly />
+              <label style={s.label}>Price Type</label>
+              <input style={{ ...s.input, background: "#f0f7f0" }} value={order.priceType === "newPrice" ? "New Price" : "Old Price"} readOnly />
             </div>
+          </div>
+          <div style={s.fieldGroup}>
+            <label style={s.label}>Branch</label>
+            <input style={{ ...s.input, background: "#f0f7f0" }} value={order.customerAddress || ""} readOnly />
           </div>
         </div>
         <div style={s.section}>
@@ -167,7 +171,17 @@ export function OrderForm({ initial, onSave, onCancel, existingOrders, products,
               </thead>
               <tbody>
                 {order.products.map((p, i) => (
-                  <ProductRow key={i} p={p} i={i} onChange={setProduct} onRemove={removeProduct} products={products} isEditing={isEditing} />
+                  <ProductRow
+                    key={i}
+                    p={p}
+                    i={i}
+                    onChange={setProduct}
+                    onRemove={removeProduct}
+                    products={products}
+                    isEditing={isEditing}
+                    priceType={order.priceType || "oldPrice"}
+                    isExistingOrder={Boolean(initial._isExisting)}
+                  />
                 ))}
               </tbody>
             </table>

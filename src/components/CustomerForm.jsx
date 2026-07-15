@@ -5,7 +5,9 @@ import { CUSTOMER_TYPES } from "../db/settingsRepo";
 
 export function CustomerForm({ initial, onSave, onCancel, couriers }) {
   const [form, setForm] = useState(
-    initial || { name: "", phone: "", courier: couriers[0] || "", branch: "", area: "", customerType: CUSTOMER_TYPES[0] }
+    initial
+      ? { ...initial, priceType: initial.priceType || "oldPrice" }
+      : { name: "", phone: "", courier: couriers[0] || "", branch: "", area: "", customerType: CUSTOMER_TYPES[0], priceType: "oldPrice" }
   );
   function f(k, v) {
     setForm((x) => ({ ...x, [k]: v }));
@@ -54,6 +56,13 @@ export function CustomerForm({ initial, onSave, onCancel, couriers }) {
               {CUSTOMER_TYPES.map((t) => (
                 <option key={t}>{t}</option>
               ))}
+            </select>
+          </div>
+          <div style={s.fieldGroup}>
+            <label style={s.label}>Price Type</label>
+            <select style={s.input} value={form.priceType || "oldPrice"} onChange={(e) => f("priceType", e.target.value)}>
+              <option value="oldPrice">Old Price</option>
+              <option value="newPrice">New Price</option>
             </select>
           </div>
         </div>

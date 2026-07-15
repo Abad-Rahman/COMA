@@ -5,6 +5,7 @@
 // সিড (pre-fill) করে দেওয়া হয়, যাতে ইউজারকে শূন্য থেকে শুরু করতে না হয়।
 // ----------------------------------------------------------------
 import { db, withSyncMeta } from "./database";
+import { normalizeProduct } from "../utils/helpers";
 
 export const DEFAULT_COURIERS = [
   { name: "করতোয়া কুরিয়ার সার্ভিস", active: true },
@@ -17,32 +18,32 @@ export const DEFAULT_COURIERS = [
 ];
 
 export const DEFAULT_PRODUCTS = [
-  { name: "Sabton 200ml", price: 35, active: true },
-  { name: "Sabton 450ml", price: 55, active: true },
-  { name: "Chitravit 200ml", price: 35, active: true },
-  { name: "Chitravit 450ml", price: 55, active: true },
-  { name: "Chitraton 200ml", price: 35, active: true },
-  { name: "Chitraton 450ml", price: 55, active: true },
-  { name: "Amloki 450ml", price: 45, active: true },
-  { name: "Pudina 450ml", price: 45, active: true },
-  { name: "Chitracid 200ml", price: 35, active: true },
-  { name: "Chitracof 100ml", price: 18, active: true },
-  { name: "Chitracof 200ml", price: 35, active: true },
-  { name: "Vasac 100ml", price: 15, active: true },
-  { name: "Tulsi Plus 100ml", price: 14, active: true },
-  { name: "Uricid 100ml", price: 15, active: true },
-  { name: "Uricid 200ml", price: 30, active: true },
-  { name: "Uricid 450ml", price: 40, active: true },
-  { name: "Mensflow 450ml", price: 60, active: true },
-  { name: "Jinsin 40ml", price: 11, active: true },
-  { name: "Jinsin 100ml", price: 13, active: true },
-  { name: "Jinsin 450ml", price: 90, active: true },
-  { name: "Ginsin", price: 70, active: true },
-  { name: "Heamof", price: 40, active: true },
-  { name: "Paincid", price: 85, active: true },
-  { name: "Pudina Tab.", price: 50, active: true },
-  { name: "Gascite", price: 50, active: true },
-  { name: "Chitrazole", price: 100, active: true },
+  { name: "Sabton 200ml", oldPrice: 35, newPrice: 35, active: true },
+  { name: "Sabton 450ml", oldPrice: 55, newPrice: 55, active: true },
+  { name: "Chitravit 200ml", oldPrice: 35, newPrice: 35, active: true },
+  { name: "Chitravit 450ml", oldPrice: 55, newPrice: 55, active: true },
+  { name: "Chitraton 200ml", oldPrice: 35, newPrice: 35, active: true },
+  { name: "Chitraton 450ml", oldPrice: 55, newPrice: 55, active: true },
+  { name: "Amloki 450ml", oldPrice: 45, newPrice: 45, active: true },
+  { name: "Pudina 450ml", oldPrice: 45, newPrice: 45, active: true },
+  { name: "Chitracid 200ml", oldPrice: 35, newPrice: 35, active: true },
+  { name: "Chitracof 100ml", oldPrice: 18, newPrice: 18, active: true },
+  { name: "Chitracof 200ml", oldPrice: 35, newPrice: 35, active: true },
+  { name: "Vasac 100ml", oldPrice: 15, newPrice: 15, active: true },
+  { name: "Tulsi Plus 100ml", oldPrice: 14, newPrice: 14, active: true },
+  { name: "Uricid 100ml", oldPrice: 15, newPrice: 15, active: true },
+  { name: "Uricid 200ml", oldPrice: 30, newPrice: 30, active: true },
+  { name: "Uricid 450ml", oldPrice: 40, newPrice: 40, active: true },
+  { name: "Mensflow 450ml", oldPrice: 60, newPrice: 60, active: true },
+  { name: "Jinsin 40ml", oldPrice: 11, newPrice: 11, active: true },
+  { name: "Jinsin 100ml", oldPrice: 13, newPrice: 13, active: true },
+  { name: "Jinsin 450ml", oldPrice: 90, newPrice: 90, active: true },
+  { name: "Ginsin", oldPrice: 70, newPrice: 70, active: true },
+  { name: "Heamof", oldPrice: 40, newPrice: 40, active: true },
+  { name: "Paincid", oldPrice: 85, newPrice: 85, active: true },
+  { name: "Pudina Tab.", oldPrice: 50, newPrice: 50, active: true },
+  { name: "Gascite", oldPrice: 50, newPrice: 50, active: true },
+  { name: "Chitrazole", oldPrice: 100, newPrice: 100, active: true },
 ];
 
 export const CUSTOMER_TYPES = ["Marketer", "Pharmacy", "Wholesale", "Other"];
@@ -86,7 +87,7 @@ export async function ensureSeedData() {
 
 export async function getAllProducts() {
   const all = await db.products.toArray();
-  return all.filter((p) => !p._deleted);
+  return all.filter((p) => !p._deleted).map((p) => normalizeProduct(p));
 }
 
 export async function getAllCouriers() {
@@ -100,7 +101,8 @@ export async function saveProducts(productList) {
 
     // productList এ যা আছে সেগুলো upsert করো
     for (const p of productList) {
-      const record = withSyncMeta(p, { isNew: !p.id });
+      const normalized = normalizeProduct(p);
+      const record = withSyncMeta(normalized, { isNew: !p.id });
       if (p.id) await db.products.put(record);
       else await db.products.add(record);
     }

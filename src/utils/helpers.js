@@ -1,6 +1,25 @@
 // src/utils/helpers.js
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+export function normalizeProduct(product) {
+  const fromLegacyPrice = parseFloat(product?.price ?? 0) || 0;
+  const oldPrice = parseFloat(product?.oldPrice ?? product?.price ?? 0) || 0;
+  const newPrice = parseFloat(product?.newPrice ?? product?.price ?? oldPrice) || 0;
+
+  return {
+    ...product,
+    oldPrice: oldPrice || fromLegacyPrice,
+    newPrice: newPrice || fromLegacyPrice,
+    price: oldPrice || fromLegacyPrice,
+  };
+}
+
+export function getProductPrice(product, priceType = "oldPrice") {
+  const normalized = normalizeProduct(product);
+  if (priceType === "newPrice") return normalized.newPrice;
+  return normalized.oldPrice;
+}
+
 export function getWeekOfMonth(date) {
   const d = new Date(date);
   const firstDay = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
@@ -47,6 +66,7 @@ export function newEmptyOrder(existingOrders, customer) {
     customerArea: customer.area || "",
     courier: customer.courier || "",
     customerId: customer.id,
+    priceType: customer?.priceType || "oldPrice",
     products: [emptyProduct()],
     note: "",
     _isExisting: false,

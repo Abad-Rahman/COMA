@@ -1,12 +1,15 @@
 // src/components/ProductRow.jsx
 import { s } from "../styles";
+import { getProductPrice } from "../utils/helpers";
 
-export function ProductRow({ p, i, onChange, onRemove, products, isEditing }) {
+export function ProductRow({ p, i, onChange, onRemove, products, isEditing, priceType, isExistingOrder }) {
   const rowTotal = (parseFloat(p.qty) || 0) * (parseFloat(p.price) || 0);
   function handleNameChange(val) {
     const found = products.find((x) => x.name === val);
     onChange(i, "name", val);
-    if (found) onChange(i, "price", String(found.price));
+    if (found && (!isExistingOrder || !p.price || String(p.price) === "")) {
+      onChange(i, "price", String(getProductPrice(found, priceType || "oldPrice")));
+    }
   }
   return (
     <tr style={i % 2 === 0 ? s.trEven : s.trOdd}>

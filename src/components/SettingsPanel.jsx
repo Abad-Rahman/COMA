@@ -1,14 +1,14 @@
 // src/components/SettingsPanel.jsx
 import { useState, useEffect } from "react";
 import { s } from "../styles";
-import { formatDate } from "../utils/helpers";
+import { formatDate, normalizeProduct } from "../utils/helpers";
 import { SyncSettings } from "./SyncSettings";
 import { printPendingReport, downloadPendingReportImage } from "../utils/downloadInvoice";
 
 export function SettingsPanel({ orders, products, couriers, onSave, onClose }) {
-  const [prods, setProds] = useState(products.map((p) => ({ ...p })));
+  const [prods, setProds] = useState(products.map((p) => normalizeProduct({ ...p })));
   const [crs, setCrs] = useState(couriers.map((c) => ({ ...c })));
-  const [newProd, setNewProd] = useState({ name: "", price: "" });
+  const [newProd, setNewProd] = useState({ name: "", oldPrice: "", newPrice: "" });
   const [newCr, setNewCr] = useState("");
   const [tab, setTab] = useState("products");
   const [pendingOrders, setPendingOrders] = useState([]);
@@ -28,7 +28,7 @@ export function SettingsPanel({ orders, products, couriers, onSave, onClose }) {
   }
 
   function cancelEdit() {
-    setProds(products.map((p) => ({ ...p })));
+    setProds(products.map((p) => normalizeProduct({ ...p })));
     setCrs(couriers.map((c) => ({ ...c })));
     setIsEditing(false);
   }
@@ -48,6 +48,11 @@ export function SettingsPanel({ orders, products, couriers, onSave, onClose }) {
       {tab === "products" && (
         <div style={{ padding: "10px" }}>
           <div style={{ maxHeight: 300, overflowY: "auto" }}>
+            <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6, fontSize: 12, fontWeight: 700, color: "#1b5e20" }}>
+              <div style={{ flex: 2.2 }}>Product</div>
+              <div style={{ flex: 1, textAlign: "right" }}>Old Price</div>
+              <div style={{ flex: 1, textAlign: "right" }}>New Price</div>
+            </div>
             {prods.map((p, i) => (
               <div key={i} style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6 }}>
                 <input
@@ -75,10 +80,21 @@ export function SettingsPanel({ orders, products, couriers, onSave, onClose }) {
                 <input
                   style={{ ...s.input, flex: 1, textAlign: "right", opacity: p.active !== false ? 1 : 0.45 }}
                   type="number"
-                  value={p.price}
+                  value={p.oldPrice ?? ""}
                   onChange={(e) => {
                     const a = [...prods];
-                    a[i] = { ...a[i], price: parseFloat(e.target.value) || 0 };
+                    a[i] = { ...a[i], oldPrice: parseFloat(e.target.value) || 0 };
+                    setProds(a);
+                  }}
+                  disabled={!isEditing}
+                />
+                <input
+                  style={{ ...s.input, flex: 1, textAlign: "right", opacity: p.active !== false ? 1 : 0.45 }}
+                  type="number"
+                  value={p.newPrice ?? ""}
+                  onChange={(e) => {
+                    const a = [...prods];
+                    a[i] = { ...a[i], newPrice: parseFloat(e.target.value) || 0 };
                     setProds(a);
                   }}
                   disabled={!isEditing}
@@ -100,16 +116,23 @@ export function SettingsPanel({ orders, products, couriers, onSave, onClose }) {
               <input
                 style={{ ...s.input, flex: 1 }}
                 type="number"
-                placeholder="Price"
-                value={newProd.price}
-                onChange={(e) => setNewProd((x) => ({ ...x, price: e.target.value }))}
+                placeholder="Old Price"
+                value={newProd.oldPrice}
+                onChange={(e) => setNewProd((x) => ({ ...x, oldPrice: e.target.value }))}
+              />
+              <input
+                style={{ ...s.input, flex: 1 }}
+                type="number"
+                placeholder="New Price"
+                value={newProd.newPrice}
+                onChange={(e) => setNewProd((x) => ({ ...x, newPrice: e.target.value }))}
               />
               <button
                 style={s.saveBtn}
                 onClick={() => {
                   if (newProd.name) {
-                    setProds([...prods, { name: newProd.name, price: parseFloat(newProd.price) || 0 }]);
-                    setNewProd({ name: "", price: "" });
+                    setProds([...prods, { name: newProd.name, oldPrice: parseFloat(newProd.oldPrice) || 0, newPrice: parseFloat(newProd.newPrice) || 0, active: true }]);
+                    setNewProd({ name: "", oldPrice: "", newPrice: "" });
                   }
                 }}
               >
