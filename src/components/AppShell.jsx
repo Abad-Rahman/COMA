@@ -13,6 +13,7 @@ import { getAllOrders, saveOrder, deleteOrder, getAllOrdersForNumbering } from "
 import { getAllCustomers, saveCustomer, deleteCustomer } from "../db/customersRepo";
 import { getAllProducts, getAllCouriers, saveProducts, saveCouriers, ensureSeedData } from "../db/settingsRepo";
 import { useSync } from "../db/useSync";
+import { useAuth } from "../hooks/useAuth";
 
 export default function AppShell() {
   const [orders, setOrders] = useState([]);
@@ -25,6 +26,7 @@ export default function AppShell() {
   const [loading, setLoading] = useState(true);
   const [confirmDialog, setConfirmDialog] = useState(null); // { message, onConfirm }
 
+  const { logout } = useAuth();
   const { status: syncStatus, pendingCount, triggerSync } = useSync();
 
   // ---- প্রথমবার অ্যাপ লোড হওয়ার সময় সব ডেটা IndexedDB থেকে আনা ----
@@ -50,6 +52,11 @@ export default function AppShell() {
   // কাজ করছিল না। তার বদলে একটা সাধারণ React মডাল দিয়ে কনফার্ম নেওয়া হচ্ছে।
   function askConfirm(message, onConfirm) {
     setConfirmDialog({ message, onConfirm });
+  }
+
+  //---------Handle Logout---------
+  async function handleLogout() {
+  await logout();
   }
 
   // ---- Order ----
@@ -199,6 +206,17 @@ export default function AppShell() {
           >
             ⚙️ Settings
           </button>
+          <button
+            style={{
+            ...s.newBtn,
+            background: "#d32f2f",
+            color: "#fff",
+            marginLeft: "10px",
+                }}
+            onClick={handleLogout}
+            >
+            Logout
+            </button>
         </div>
       </div>
       <div style={s.tabBar}>

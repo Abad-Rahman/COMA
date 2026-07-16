@@ -3,6 +3,7 @@ import AppShell from "./components/AppShell";
 import LoginForm from "./components/auth/LoginForm";
 import RegisterForm from "./components/auth/RegisterForm";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import GuestRoute from "./components/auth/GuestRoute";
 
 export default function App() {
   return (
@@ -15,9 +16,24 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-      <Route path="/login" element={<LoginForm />} />
-      <Route path="/register" element={<RegisterForm />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+    <Route
+      path="/login"
+      element={
+        <GuestRoute>
+          <LoginForm />
+        </GuestRoute>
+      }
+    />
+
+    <Route
+      path="/register"
+      element={
+        <GuestRoute>
+          <RegisterForm />
+        </GuestRoute>
+      }
+    />
+    <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
