@@ -9,6 +9,11 @@ export function AuthProvider({ children }) {
 // =======================================================
 const [user, setUser] = useState(null);
 const [loading, setLoading] = useState(true);
+// =======================================================
+// User Profile State
+// =======================================================
+
+const [profile, setProfile] = useState(null);
 
 useEffect(() => {
   // App চালু হলে বর্তমান user লোড করা
@@ -17,19 +22,38 @@ useEffect(() => {
 
     if (data.user) {
       setUser(data.user);
+
+      // =======================================================
+      // Load User Profile
+      // =======================================================
+
+      await loadProfile(data.user.id);
     }
+
     setLoading(false);
   }
 
   loadUser();
 
   // Login / Logout হলে user state update করা
-  const {
-    data: { subscription },
-  } = supabase.auth.onAuthStateChange((event, session) => {
-    setUser(session?.user ?? null);
-    setLoading(false);
-  });
+const {
+  data: { subscription },
+} = supabase.auth.onAuthStateChange(async (event, session) => {
+
+  setUser(session?.user ?? null);
+
+  // =======================================================
+  // Load Profile After Auth Change
+  // =======================================================
+
+  if (session?.user) {
+    await loadProfile(session.user.id);
+  } else {
+    setProfile(null);
+  }
+
+  setLoading(false);
+});
 
   // Cleanup
   return () => {
@@ -76,19 +100,44 @@ async function logout() {
 
   if (!error) {
     setUser(null);
+    setProfile(null);
   }
 
   return { error };
 }
+
+// =======================================================
+// Load User Profile
+// =======================================================
+
+async function loadProfile(userId) {
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Failed to load profile:", error.message);
+    return null;
+  }
+
+  setProfile(data);
+  return data;
+}
     
-  return (
-    <AuthContext.Provider value={{
-    user,
-    loading,
-    login,
-    register,
-    logout
-}}>
+return (
+  <AuthContext.Provider
+    value={{
+      user,
+      profile,
+      loading,
+      login,
+      register,
+      logout,
+    }}
+  >
       {children}
     </AuthContext.Provider>
   );

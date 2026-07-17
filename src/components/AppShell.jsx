@@ -27,6 +27,7 @@ export default function AppShell() {
   const [confirmDialog, setConfirmDialog] = useState(null); // { message, onConfirm }
 
   const { logout } = useAuth();
+  const { profile } = useAuth();
   const { status: syncStatus, pendingCount, triggerSync } = useSync();
 
   // ---- প্রথমবার অ্যাপ লোড হওয়ার সময় সব ডেটা IndexedDB থেকে আনা ----
@@ -199,6 +200,16 @@ export default function AppShell() {
           <div style={s.navBrand}>
             <span style={s.navLogo}>চিত্রা ল্যাবরেটরীজ</span>
             <span style={s.navSub}>Order Management {syncIcon && <span title="sync status">{syncIcon}</span>}</span>
+          </div>
+          <div
+            style={{
+              fontSize: 13,
+              color: "#fff",
+              opacity: 0.9,
+              marginTop: 4,
+            }}
+          >
+            👤 {profile?.full_name ?? "Loading..."}
           </div>
           <button
             style={{ ...s.newBtn, background: "rgba(255,255,255,0.15)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)" }}
