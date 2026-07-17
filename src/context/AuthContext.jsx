@@ -50,10 +50,17 @@ async function login(email, password) {
   return { data, error };
 }
 
-async function register(email, password) {
+// User Registration
+async function register(email, password, fullName) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
+
+    options: {
+      data: {
+        full_name: fullName,
+      },
+    },
   });
 
   return { data, error };

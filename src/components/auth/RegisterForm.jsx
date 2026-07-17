@@ -59,7 +59,11 @@ async function handleRegister(e) {
 
   setLoading(true);
 
-  const { error } = await register(email, password);
+  const { error } = await register(
+    email,
+    password,
+    name
+  );
 
   if (error) {
     setError(error.message);
