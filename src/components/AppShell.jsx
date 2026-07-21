@@ -27,7 +27,7 @@ export default function AppShell() {
   const [confirmDialog, setConfirmDialog] = useState(null); // { message, onConfirm }
 
   const { logout } = useAuth();
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const { status: syncStatus, pendingCount, triggerSync } = useSync();
 
   // ---- প্রথমবার অ্যাপ লোড হওয়ার সময় সব ডেটা IndexedDB থেকে আনা ----
@@ -60,18 +60,42 @@ export default function AppShell() {
   await logout();
   }
 
-  // ---- Order ----
-  async function handleSaveOrder(order) {
-    const saved = await saveOrder(order);
-    await reloadAll();
-    triggerSync();
-    if (modal?.returnToCustomerProfile) {
-      const cust = customers.find((c) => c.id === saved.customerId);
-      if (cust) setModal({ type: "customer-profile", data: cust });
-      else setModal(null);
-    } else setModal(null);
-  }
+// ---- Order ----
+// =======================================================
+// Save Order
+// Attach logged-in user's ID before saving
+// =======================================================
 
+async function handleSaveOrder(order) {
+
+  const orderWithUser = {
+    ...order,
+    user_id: user.id,
+  };
+
+  const saved = await saveOrder(orderWithUser);
+
+  await reloadAll();
+  triggerSync();
+
+  if (modal?.returnToCustomerProfile) {
+    const cust = customers.find((c) => c.id === saved.customerId);
+
+    if (cust) {
+      setModal({
+        type: "customer-profile",
+        data: cust,
+      });
+    } else {
+      setModal(null);
+    }
+
+  } else {
+    setModal(null);
+  }
+}
+
+// Delete Order
   function handleDeleteOrder(id) {
     askConfirm("এই অর্ডারটি মুছে ফেলবেন?", async () => {
       await deleteOrder(id);

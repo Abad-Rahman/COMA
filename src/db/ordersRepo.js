@@ -23,8 +23,18 @@ export async function getOrdersByCustomer(customerId) {
   return all.filter((o) => !o._deleted).sort(compareOrders);
 }
 
+// =======================================================
+// Save Order
+// Insert new order or update existing order
+// =======================================================
 export async function saveOrder(order) {
   const record = withSyncMeta(order, { isNew: !order.id });
+
+// =======================================================
+// Future:
+// Logged-in user's user_id will be attached here
+// before saving to Dexie & Supabase.
+// =======================================================
   if (order.id) {
     await db.orders.put(record);
     return record;
