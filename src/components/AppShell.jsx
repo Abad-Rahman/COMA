@@ -14,6 +14,8 @@ import { getAllCustomers, saveCustomer, deleteCustomer } from "../db/customersRe
 import { getAllProducts, getAllCouriers, saveProducts, saveCouriers, ensureSeedData } from "../db/settingsRepo";
 import { useSync } from "../db/useSync";
 import { useAuth } from "../hooks/useAuth";
+import { testCloudConnection } from "../db/cloudSync";
+import { uploadOrder } from "../db/cloudSync";
 
 export default function AppShell() {
   const [orders, setOrders] = useState([]);
@@ -47,6 +49,43 @@ export default function AppShell() {
     })();
   }, [reloadAll]);
 
+// =======================================================
+// Temporary Cloud Connection Test
+// =======================================================
+
+async function handleCloudTest() {
+  const result = await testCloudConnection();
+
+  console.log("Cloud Test:", result);
+
+  if (result.success) {
+    alert("Cloud Connection Successful");
+  } else {
+    alert(result.message);
+  }
+}
+
+// =======================================================
+// Temporary Upload Test
+// =======================================================
+
+async function handleUploadTest() {
+  if (orders.length === 0) {
+    alert("No orders found.");
+    return;
+  }
+
+  const result = await uploadOrder(orders[0]);
+
+  console.log("Upload Result:", result);
+
+  if (result.success) {
+    alert("Order uploaded successfully.");
+  } else {
+    alert(result.message);
+  }
+}
+
   // ---- Confirm dialog ----
   // window.confirm() ব্যবহার করা হচ্ছে না কারণ Capacitor/PWA WebView এ এটা
   // অনেক সময় ঠিকভাবে কাজ করে না (সাইলেন্টলি false রিটার্ন করে), ফলে delete
@@ -74,7 +113,8 @@ async function handleSaveOrder(order) {
   };
 
   const saved = await saveOrder(orderWithUser);
-
+  
+  await uploadOrder(saved);
   await reloadAll();
   triggerSync();
 
@@ -240,6 +280,20 @@ async function handleSaveOrder(order) {
             onClick={() => setModal({ type: "settings" })}
           >
             ⚙️ Settings
+          </button>
+          <button
+            onClick={handleCloudTest}
+            style={{
+              marginLeft: 10,
+            }}
+          >
+            ☁️ Test Cloud
+          </button>
+          <button
+            onClick={handleUploadTest}
+            style={{ marginLeft: 10 }}
+          >
+            ⬆ Upload Order
           </button>
           <button
             style={{
