@@ -15,8 +15,7 @@ import { getAllProducts, getAllCouriers, saveProducts, saveCouriers, ensureSeedD
 import { useSync } from "../db/useSync";
 import { useAuth } from "../hooks/useAuth";
 import { testCloudConnection } from "../db/cloudSync";
-import { uploadOrder, uploadCustomer } from "../db/cloudSync";
-import { downloadOrders } from "../db/cloudSync";
+import { uploadOrder, uploadCustomer, downloadOrders, downloadCustomers } from "../db/cloudSync";
 
 export default function AppShell() {
   const [orders, setOrders] = useState([]);
@@ -71,14 +70,28 @@ async function handleCloudTest() {
 // =======================================================
 
 async function handleDownloadTest() {
-  const result = await downloadOrders();
 
-  console.log("Download Result:", result);
+  const orderResult = await downloadOrders();
+  const customerResult = await downloadCustomers();
 
-  if (result.success) {
-    alert(`Downloaded ${result.orders.length} orders.`);
+  console.log("Order Download:", orderResult);
+  console.log("Customer Download:", customerResult);
+
+  if (orderResult.success && customerResult.success) {
+
+    await reloadAll();
+
+    alert(
+      `Downloaded ${orderResult.downloaded} orders and ${customerResult.downloaded} customers.`
+    );
+
   } else {
-    alert(result.message);
+
+    alert(
+      orderResult.message ||
+      customerResult.message
+    );
+
   }
 }
 

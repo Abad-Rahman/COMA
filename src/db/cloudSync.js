@@ -204,6 +204,43 @@ export async function downloadOrders() {
 }
 
 // =======================================================
+// Download All Customers
+// =======================================================
+
+export async function downloadCustomers() {
+
+  try {
+
+    const data = await downloadRecords("customers");
+
+    for (const customer of data || []) {
+      await mergeDownloadedCustomer(customer);
+    }
+
+    const allLocal = await db.customers.toArray();
+
+    console.log("All Local Customers:", allLocal);
+
+    return {
+      success: true,
+      customers: data,
+      downloaded: data.length,
+    };
+
+  } catch (err) {
+
+    console.error("Download Customers Error:", err);
+
+    return {
+      success: false,
+      message: err.message,
+    };
+
+  }
+
+}
+
+// =======================================================
 // Download Generic Records
 // =======================================================
 
@@ -266,4 +303,44 @@ async function mergeDownloadedOrder(cloudOrder) {
       await db.orders.put(localRecord);
 
   }
+}
+
+// =======================================================
+// Merge Downloaded Customer Into Local Database
+// =======================================================
+
+async function mergeDownloadedCustomer(cloudCustomer) {
+
+  const customer = cloudCustomer.customer_data;
+
+  const existing = await db.customers.get(cloudCustomer.local_id);
+
+  // Local এ না থাকলে নতুন করে Insert
+  if (!existing) {
+
+    await db.customers.put({
+      ...customer,
+      id: cloudCustomer.local_id,
+      _syncStatus: "synced",
+      _deleted: false,
+    });
+
+    return;
+  }
+
+  // Local record delete থাকলে অথবা Cloud record newer/equal হলে Update
+  if (
+    existing._deleted ||
+    (customer.updatedAt || 0) >= (existing.updatedAt || 0)
+  ) {
+
+    await db.customers.put({
+      ...customer,
+      id: cloudCustomer.local_id,
+      _syncStatus: "synced",
+      _deleted: false,
+    });
+
+  }
+
 }
