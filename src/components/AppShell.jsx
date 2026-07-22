@@ -16,6 +16,7 @@ import { useSync } from "../db/useSync";
 import { useAuth } from "../hooks/useAuth";
 import { testCloudConnection } from "../db/cloudSync";
 import { uploadOrder } from "../db/cloudSync";
+import { downloadOrders } from "../db/cloudSync";
 
 export default function AppShell() {
   const [orders, setOrders] = useState([]);
@@ -60,6 +61,22 @@ async function handleCloudTest() {
 
   if (result.success) {
     alert("Cloud Connection Successful");
+  } else {
+    alert(result.message);
+  }
+}
+
+// =======================================================
+// Temporary Download Test
+// =======================================================
+
+async function handleDownloadTest() {
+  const result = await downloadOrders();
+
+  console.log("Download Result:", result);
+
+  if (result.success) {
+    alert(`Downloaded ${result.orders.length} orders.`);
   } else {
     alert(result.message);
   }
@@ -113,7 +130,7 @@ async function handleSaveOrder(order) {
   };
 
   const saved = await saveOrder(orderWithUser);
-  
+
   await uploadOrder(saved);
   await reloadAll();
   triggerSync();
@@ -288,6 +305,14 @@ async function handleSaveOrder(order) {
             }}
           >
             ☁️ Test Cloud
+          </button>
+          <button
+            onClick={handleDownloadTest}
+            style={{
+              marginLeft: 10,
+            }}
+          >
+            ⬇ Download Orders
           </button>
           <button
             onClick={handleUploadTest}

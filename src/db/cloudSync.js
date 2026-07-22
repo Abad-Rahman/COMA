@@ -6,6 +6,7 @@
 // =======================================================
 
 import { supabase } from "../lib/supabase";
+import { db } from "./database";
 
 // =======================================================
 // Test Connection
@@ -108,5 +109,96 @@ export async function uploadOrder(order) {
       success: false,
       message: err.message,
     };
+  }
+}
+
+// =======================================================
+// Download All Orders
+// =======================================================
+
+export async function downloadOrders() {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new Error("User not logged in.");
+    }
+
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("user_id", user.id)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false });
+
+        if (error) {
+        throw error;
+        }
+
+        // =======================================================
+        // Merge Cloud Orders Into Local Database
+        // =======================================================
+
+        for (const order of data || []) {
+        await mergeDownloadedOrder(order);
+        }
+
+        const allLocal = await db.orders.toArray();
+
+        console.log("All Local Orders:", allLocal);
+
+        return {
+        success: true,
+        orders: data,
+        downloaded: data.length,
+        };
+
+  } catch (err) {
+    console.error("Download Orders Error:", err);
+
+    return {
+      success: false,
+      message: err.message,
+    };
+  }
+}
+
+// =======================================================
+// Merge Downloaded Order Into Local Database
+// =======================================================
+
+async function mergeDownloadedOrder(cloudOrder) {
+
+  const order = cloudOrder.order_data;
+
+  const existing = await db.orders.get(cloudOrder.local_id);
+
+  const localRecord = {
+    ...order,
+
+    id: cloudOrder.local_id,
+
+    _syncStatus: "synced",
+
+    createdAt: order.createdAt,
+
+    updatedAt: order.updatedAt,
+
+    _deleted: false,
+  };
+
+  if (!existing) {
+    await db.orders.put(localRecord);
+    return;
+  }
+
+  if (
+      existing._deleted ||
+      (localRecord.updatedAt || 0) >= (existing.updatedAt || 0)
+  ) {
+      await db.orders.put(localRecord);
+
   }
 }
