@@ -61,54 +61,109 @@ export async function testCloudConnection() {
 }
 
 // =======================================================
+// Upload Generic Record
+// =======================================================
+
+async function uploadRecord(tableName, localId, data) {
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not logged in.");
+  }
+
+  const now = new Date().toISOString();
+
+  // orders -> order_data
+  // customers -> customer_data
+  // products -> product_data
+  // couriers -> courier_data
+  const dataColumn = tableName.slice(0, -1) + "_data";
+
+  const payload = {
+    user_id: user.id,
+    local_id: localId,
+    sync_status: "synced",
+    created_at: now,
+    updated_at: now,
+  };
+
+  payload[dataColumn] = data;
+
+  const { data: result, error } = await supabase
+    .from(tableName)
+    .upsert(payload, {
+      onConflict: "user_id,local_id",
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return result;
+}
+
+// =======================================================
 // Upload One Order
 // =======================================================
 
 export async function uploadOrder(order) {
+try {
+
+  const data = await uploadRecord(
+    "orders",
+    order.id,
+    order
+  );
+
+  return {
+    success: true,
+    data,
+  };
+
+} catch (err) {
+
+  console.error("Upload Order Error:", err);
+
+  return {
+    success: false,
+    message: err.message,
+  };
+
+}
+}
+
+// =======================================================
+// Upload One Customer
+// =======================================================
+
+export async function uploadCustomer(customer) {
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
 
-    if (!user) {
-      throw new Error("User not logged in.");
-    }
-
-    const now = new Date().toISOString();
-
-    const { data, error } = await supabase
-      .from("orders")
-      .upsert(
-        {
-            user_id: user.id,
-            local_id: order.id,
-            order_data: order,
-            sync_status: "synced",
-            created_at: now,
-            updated_at: now,
-        },
-        {
-          onConflict: "user_id,local_id",
-        }
-      )
-      .select()
-      .single();
-
-    if (error) {
-      throw error;
-    }
+    const data = await uploadRecord(
+      "customers",
+      customer.id,
+      customer
+    );
 
     return {
       success: true,
       data,
     };
+
   } catch (err) {
-    console.error("Upload Order Error:", err);
+
+    console.error("Upload Customer Error:", err);
 
     return {
       success: false,
       message: err.message,
     };
+
   }
 }
 
@@ -118,24 +173,7 @@ export async function uploadOrder(order) {
 
 export async function downloadOrders() {
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      throw new Error("User not logged in.");
-    }
-
-    const { data, error } = await supabase
-      .from("orders")
-      .select("*")
-      .eq("user_id", user.id)
-      .is("deleted_at", null)
-      .order("updated_at", { ascending: false });
-
-        if (error) {
-        throw error;
-        }
+    const data = await downloadRecords("orders");
 
         // =======================================================
         // Merge Cloud Orders Into Local Database
@@ -165,6 +203,33 @@ export async function downloadOrders() {
   }
 }
 
+// =======================================================
+// Download Generic Records
+// =======================================================
+
+async function downloadRecords(tableName) {
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not logged in.");
+  }
+
+  const { data, error } = await supabase
+    .from(tableName)
+    .select("*")
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
+}
 // =======================================================
 // Merge Downloaded Order Into Local Database
 // =======================================================

@@ -15,7 +15,7 @@ import { getAllProducts, getAllCouriers, saveProducts, saveCouriers, ensureSeedD
 import { useSync } from "../db/useSync";
 import { useAuth } from "../hooks/useAuth";
 import { testCloudConnection } from "../db/cloudSync";
-import { uploadOrder } from "../db/cloudSync";
+import { uploadOrder, uploadCustomer } from "../db/cloudSync";
 import { downloadOrders } from "../db/cloudSync";
 
 export default function AppShell() {
@@ -170,13 +170,19 @@ async function handleSaveOrder(order) {
     triggerSync();
   }
 
-  // ---- Customer ----
-  async function handleSaveCustomer(c) {
-    await saveCustomer(c);
-    await reloadAll();
-    triggerSync();
-    setModal(null);
-  }
+// ---- Customer ----
+async function handleSaveCustomer(c) {
+
+  const saved = await saveCustomer(c);
+
+  await uploadCustomer(saved);
+
+  await reloadAll();
+
+  triggerSync();
+
+  setModal(null);
+}
 
   function handleDeleteCustomer(id) {
     askConfirm("এই কাস্টমার মুছে ফেলবেন?", async () => {
