@@ -15,7 +15,20 @@ import { getAllProducts, getAllCouriers, saveProducts, saveCouriers, ensureSeedD
 import { useSync } from "../db/useSync";
 import { useAuth } from "../hooks/useAuth";
 import { testCloudConnection } from "../db/cloudSync";
-import { uploadOrder, uploadCustomer, uploadProduct, uploadCourier, downloadOrders, downloadCustomers, downloadProducts, downloadCouriers } from "../db/cloudSync";
+import {
+  uploadOrder,
+  uploadCustomer,
+  uploadProduct,
+  uploadCourier,
+  deleteCloudOrder,
+  deleteCloudCustomer,
+  deleteCloudProduct,
+  deleteCloudCourier,
+  downloadOrders,
+  downloadCustomers,
+  downloadProducts,
+  downloadCouriers,
+} from "../db/cloudSync";
 
 export default function AppShell() {
   const [orders, setOrders] = useState([]);
@@ -170,13 +183,23 @@ async function handleSaveOrder(order) {
 }
 
 // Delete Order
-  function handleDeleteOrder(id) {
-    askConfirm("এই অর্ডারটি মুছে ফেলবেন?", async () => {
-      await deleteOrder(id);
-      await reloadAll();
-      triggerSync();
-    });
-  }
+function handleDeleteOrder(id) {
+  askConfirm("এই অর্ডারটি মুছে ফেলবেন?", async () => {
+
+    // প্রথমে Local Delete
+    await deleteOrder(id);
+
+    // তারপর Cloud Delete
+    try {
+      await deleteCloudOrder(id);
+    } catch (err) {
+      console.error("Cloud Delete Order Error:", err);
+    }
+
+    await reloadAll();
+    triggerSync();
+  });
+}
 
   // ---- Order Status Toggle (courier sent / payment received) ----
   async function handleToggleOrderStatus(orderId, field, value) {
@@ -201,24 +224,86 @@ async function handleSaveCustomer(c) {
   setModal(null);
 }
 
-  function handleDeleteCustomer(id) {
-    askConfirm("এই কাস্টমার মুছে ফেলবেন?", async () => {
-      await deleteCustomer(id);
-      await reloadAll();
-      triggerSync();
-    });
-  }
+function handleDeleteCustomer(id) {
+  askConfirm("এই কাস্টমার মুছে ফেলবেন?", async () => {
+
+    // প্রথমে Local Delete
+    await deleteCustomer(id);
+
+    // তারপর Cloud Delete
+    try {
+      await deleteCloudCustomer(id);
+    } catch (err) {
+      console.error("Cloud Delete Customer Error:", err);
+    }
+
+    await reloadAll();
+    triggerSync();
+  });
+}
 
   // ---- Settings (products/couriers) ----
 async function handleSaveSettings(prodList, courierNames) {
 
+  // Save করার আগের Local Data
+  const oldProducts = await getAllProducts();
+  const oldCouriers = await getAllCouriers();
+
+  // Save
   const savedProducts = await saveProducts(prodList);
+  const savedCouriers = await saveCouriers(courierNames);
+
+  // ==========================
+  // Deleted Products
+  // ==========================
+
+  const newProductIds = new Set(
+    savedProducts
+      .filter((p) => p.id)
+      .map((p) => p.id)
+  );
+
+  for (const p of oldProducts) {
+    if (p.id && !newProductIds.has(p.id)) {
+      try {
+        await deleteCloudProduct(p.id);
+      } catch (err) {
+        console.error("Cloud Product Delete Error:", err);
+      }
+    }
+  }
+
+  // ==========================
+  // Deleted Couriers
+  // ==========================
+
+  const newCourierIds = new Set(
+    savedCouriers
+      .filter((c) => c.id)
+      .map((c) => c.id)
+  );
+
+  for (const c of oldCouriers) {
+    if (c.id && !newCourierIds.has(c.id)) {
+      try {
+        await deleteCloudCourier(c.id);
+      } catch (err) {
+        console.error("Cloud Courier Delete Error:", err);
+      }
+    }
+  }
+
+  // ==========================
+  // Upload Products
+  // ==========================
 
   for (const product of savedProducts) {
     await uploadProduct(product);
   }
 
-  const savedCouriers = await saveCouriers(courierNames);
+  // ==========================
+  // Upload Couriers
+  // ==========================
 
   for (const courier of savedCouriers) {
     await uploadCourier(courier);

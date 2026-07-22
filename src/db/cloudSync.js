@@ -108,6 +108,61 @@ async function uploadRecord(tableName, localId, data) {
 }
 
 // =======================================================
+// Download Generic Records
+// =======================================================
+
+async function downloadRecords(tableName) {
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not logged in.");
+  }
+
+  const { data, error } = await supabase
+    .from(tableName)
+    .select("*")
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
+}
+
+// =======================================================
+// Delete One Record From Cloud
+// =======================================================
+
+async function deleteRecord(tableName, localId) {
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not logged in.");
+  }
+
+  const { error } = await supabase
+    .from(tableName)
+    .delete()
+    .eq("user_id", user.id)
+    .eq("local_id", localId);
+
+  if (error) {
+    throw error;
+  }
+
+  return true;
+}
+
+// =======================================================
 // Upload One Order
 // =======================================================
 
@@ -227,6 +282,38 @@ export async function uploadCourier(courier) {
 
   }
 
+}
+
+// =======================================================
+// Delete Order
+// =======================================================
+
+export async function deleteCloudOrder(localId) {
+  return deleteRecord("orders", localId);
+}
+
+// =======================================================
+// Delete Customer
+// =======================================================
+
+export async function deleteCloudCustomer(localId) {
+  return deleteRecord("customers", localId);
+}
+
+// =======================================================
+// Delete Product
+// =======================================================
+
+export async function deleteCloudProduct(localId) {
+  return deleteRecord("products", localId);
+}
+
+// =======================================================
+// Delete Courier
+// =======================================================
+
+export async function deleteCloudCourier(localId) {
+  return deleteRecord("couriers", localId);
 }
 
 // =======================================================
@@ -378,33 +465,7 @@ export async function downloadCouriers() {
 
 }
 
-// =======================================================
-// Download Generic Records
-// =======================================================
 
-async function downloadRecords(tableName) {
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error("User not logged in.");
-  }
-
-  const { data, error } = await supabase
-    .from(tableName)
-    .select("*")
-    .eq("user_id", user.id)
-    .is("deleted_at", null)
-    .order("updated_at", { ascending: false });
-
-  if (error) {
-    throw error;
-  }
-
-  return data || [];
-}
 // =======================================================
 // Merge Downloaded Order Into Local Database
 // =======================================================
