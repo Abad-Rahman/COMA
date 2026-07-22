@@ -15,7 +15,7 @@ import { getAllProducts, getAllCouriers, saveProducts, saveCouriers, ensureSeedD
 import { useSync } from "../db/useSync";
 import { useAuth } from "../hooks/useAuth";
 import { testCloudConnection } from "../db/cloudSync";
-import { uploadOrder, uploadCustomer, downloadOrders, downloadCustomers } from "../db/cloudSync";
+import { uploadOrder, uploadCustomer, uploadProduct, uploadCourier, downloadOrders, downloadCustomers, downloadProducts, downloadCouriers } from "../db/cloudSync";
 
 export default function AppShell() {
   const [orders, setOrders] = useState([]);
@@ -73,16 +73,20 @@ async function handleDownloadTest() {
 
   const orderResult = await downloadOrders();
   const customerResult = await downloadCustomers();
+  const productResult = await downloadProducts();
+  const courierResult = await downloadCouriers();
 
   console.log("Order Download:", orderResult);
   console.log("Customer Download:", customerResult);
+  console.log("Product Download:", productResult);
+  console.log("Courier Download:", courierResult);
 
-  if (orderResult.success && customerResult.success) {
+  if (orderResult.success && customerResult.success && productResult.success && courierResult.success) {
 
     await reloadAll();
 
     alert(
-      `Downloaded ${orderResult.downloaded} orders and ${customerResult.downloaded} customers.`
+      `Downloaded ${orderResult.downloaded} orders, ${customerResult.downloaded} customers, ${productResult.downloaded} products and ${courierResult.downloaded} couriers.`
     );
 
   } else {
@@ -206,12 +210,24 @@ async function handleSaveCustomer(c) {
   }
 
   // ---- Settings (products/couriers) ----
-  async function handleSaveSettings(prodList, courierNames) {
-    await saveProducts(prodList);
-    await saveCouriers(courierNames);
-    await reloadAll();
-    triggerSync();
+async function handleSaveSettings(prodList, courierNames) {
+
+  const savedProducts = await saveProducts(prodList);
+
+  for (const product of savedProducts) {
+    await uploadProduct(product);
   }
+
+  const savedCouriers = await saveCouriers(courierNames);
+
+  for (const courier of savedCouriers) {
+    await uploadCourier(courier);
+  }
+
+  await reloadAll();
+
+  triggerSync();
+}
 
   async function openNewOrderForCustomer(customer, returnToCustomerProfile = false) {
     const numbering = await getAllOrdersForNumbering();

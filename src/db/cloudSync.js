@@ -168,6 +168,68 @@ export async function uploadCustomer(customer) {
 }
 
 // =======================================================
+// Upload One Product
+// =======================================================
+
+export async function uploadProduct(product) {
+  try {
+
+    const data = await uploadRecord(
+      "products",
+      product.id,
+      product
+    );
+
+    return {
+      success: true,
+      data,
+    };
+
+  } catch (err) {
+
+    console.error("Upload Product Error:", err);
+
+    return {
+      success: false,
+      message: err.message,
+    };
+
+  }
+}
+
+// =======================================================
+// Upload One Courier
+// =======================================================
+
+export async function uploadCourier(courier) {
+
+  try {
+
+    const data = await uploadRecord(
+      "couriers",
+      courier.id,
+      courier
+    );
+
+    return {
+      success: true,
+      data,
+    };
+
+  } catch (err) {
+
+    console.error("Upload Courier Error:", err);
+
+    return {
+      success: false,
+      message: err.message,
+    };
+
+  }
+
+}
+
+// =======================================================
 // Download All Orders
 // =======================================================
 
@@ -230,6 +292,82 @@ export async function downloadCustomers() {
   } catch (err) {
 
     console.error("Download Customers Error:", err);
+
+    return {
+      success: false,
+      message: err.message,
+    };
+
+  }
+
+}
+
+// =======================================================
+// Download All Products
+// =======================================================
+
+export async function downloadProducts() {
+
+  try {
+
+    const data = await downloadRecords("products");
+
+    for (const product of data || []) {
+      await mergeDownloadedProduct(product);
+    }
+
+    console.log(
+      "All Local Products:",
+      await db.products.toArray()
+    );
+
+    return {
+      success: true,
+      products: data,
+      downloaded: data.length,
+    };
+
+  } catch (err) {
+
+    console.error("Download Products Error:", err);
+
+    return {
+      success: false,
+      message: err.message,
+    };
+
+  }
+
+}
+
+// =======================================================
+// Download All Couriers
+// =======================================================
+
+export async function downloadCouriers() {
+
+  try {
+
+    const data = await downloadRecords("couriers");
+
+    for (const courier of data || []) {
+      await mergeDownloadedCourier(courier);
+    }
+
+    console.log(
+      "All Local Couriers:",
+      await db.couriers.toArray()
+    );
+
+    return {
+      success: true,
+      couriers: data,
+      downloaded: data.length,
+    };
+
+  } catch (err) {
+
+    console.error("Download Couriers Error:", err);
 
     return {
       success: false,
@@ -337,6 +475,83 @@ async function mergeDownloadedCustomer(cloudCustomer) {
     await db.customers.put({
       ...customer,
       id: cloudCustomer.local_id,
+      _syncStatus: "synced",
+      _deleted: false,
+    });
+
+  }
+
+}
+
+// =======================================================
+// Merge Downloaded Product
+// =======================================================
+
+async function mergeDownloadedProduct(cloudProduct) {
+
+  const product = cloudProduct.product_data;
+
+  const existing = await db.products.get(cloudProduct.local_id);
+
+  if (!existing) {
+
+    await db.products.put({
+      ...product,
+      id: cloudProduct.local_id,
+      _syncStatus: "synced",
+      _deleted: false,
+    });
+
+    return;
+  }
+
+  if (
+    existing._deleted ||
+    (product.updatedAt || 0) >= (existing.updatedAt || 0)
+  ) {
+
+    await db.products.put({
+      ...product,
+      id: cloudProduct.local_id,
+      _syncStatus: "synced",
+      _deleted: false,
+    });
+
+  }
+
+}
+
+// =======================================================
+// Merge Downloaded Courier
+// =======================================================
+
+async function mergeDownloadedCourier(cloudCourier) {
+
+  const courier = cloudCourier.courier_data;
+
+  const existing = await db.couriers.get(cloudCourier.local_id);
+
+  if (!existing) {
+
+    await db.couriers.put({
+      ...courier,
+      id: cloudCourier.local_id,
+      _syncStatus: "synced",
+      _deleted: false,
+    });
+
+    return;
+
+  }
+
+  if (
+    existing._deleted ||
+    (courier.updatedAt || 0) >= (existing.updatedAt || 0)
+  ) {
+
+    await db.couriers.put({
+      ...courier,
+      id: cloudCourier.local_id,
       _syncStatus: "synced",
       _deleted: false,
     });
